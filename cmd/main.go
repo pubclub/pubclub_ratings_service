@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -16,10 +17,10 @@ type DynamoAPI struct {
 }
 
 type Rating struct {
-	ratingId     string `json:"RatingId"`
-	creationDate string `json:"CreationDate"`
-	userId       string `json:"UserId"`
-	placeId      string `json:"PlaceId"`
+	RatingId     string `json:"RatingId"`
+	CreationDate string `json:"CreationDate"`
+	UserId       string `json:"UserId"`
+	PlaceId      string `json:"PlaceId"`
 }
 
 var TableName string = "ratings-table"
@@ -27,10 +28,10 @@ var TableName string = "ratings-table"
 func addRatingToDB(dyna DynamoAPI, rating Rating) (*dynamodb.PutItemOutput, error) {
 
 	putItem := map[string]*dynamodb.AttributeValue{
-		"RatingId":     {S: aws.String(rating.ratingId)},
-		"CreationDate": {S: aws.String(rating.creationDate)},
-		"UserId":       {S: aws.String(rating.userId)},
-		"PlaceId":      {S: aws.String(rating.placeId)},
+		"RatingId":     {S: aws.String(rating.RatingId)},
+		"CreationDate": {S: aws.String(rating.CreationDate)},
+		"UserId":       {S: aws.String(rating.UserId)},
+		"PlaceId":      {S: aws.String(rating.PlaceId)},
 	}
 
 	input := &dynamodb.PutItemInput{
@@ -52,6 +53,8 @@ func createRating(c *gin.Context) {
 	if err := c.BindJSON(&newRating); err != nil {
 		return
 	}
+
+	fmt.Println(newRating)
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,

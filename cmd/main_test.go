@@ -16,17 +16,17 @@ func TestAddRatingToDB(t *testing.T) {
 	dyna.Db, mock = dynamock.New()
 
 	rating := Rating{
-		ratingId:     "1",
-		creationDate: "2022-12-23",
-		userId:       "1",
-		placeId:      "1",
+		RatingId:     "1",
+		CreationDate: "2022-12-23",
+		UserId:       "1",
+		PlaceId:      "1",
 	}
 
 	putItem := map[string]*dynamodb.AttributeValue{
-		"RatingId":     {S: aws.String(rating.ratingId)},
-		"CreationDate": {S: aws.String(rating.creationDate)},
-		"UserId":       {S: aws.String(rating.userId)},
-		"PlaceId":      {S: aws.String(rating.placeId)},
+		"RatingId":     {S: aws.String(rating.RatingId)},
+		"CreationDate": {S: aws.String(rating.CreationDate)},
+		"UserId":       {S: aws.String(rating.UserId)},
+		"PlaceId":      {S: aws.String(rating.PlaceId)},
 	}
 
 	mock.ExpectPutItem().ToTable(TableName).WithItems(putItem)
