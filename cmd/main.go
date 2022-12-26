@@ -1,16 +1,22 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
 )
+
+var ginLambda *ginadapter.GinLambda
 
 type DynamoAPI struct {
 	Db dynamodbiface.DynamoDBAPI
@@ -72,8 +78,16 @@ func createRating(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, newRating)
 }
 
+func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	return ginLambda.ProxyWithContext(ctx, req)
+}
+
 func main() {
 	router := gin.Default()
 	router.POST("/rating", createRating)
-	router.Run("localhost:8080")
+	ginLambda = ginadapter.New(router)
+	lambda.Start(Handler)
+	// TODO: Create a removeRating function
+	// TODO: Create a getRatings function
+	//     - Maybe also getRatingsById function
 }
