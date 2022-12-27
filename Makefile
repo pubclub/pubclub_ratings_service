@@ -24,4 +24,4 @@ build: builds_directory
 
 .PHONY: deploy
 deploy: bucket build
-	@aws s3 cp builds/main.zip s3://$(BUCKET)/ratings/v$(VERSION)/main.zip
+	@aws s3 cp builds/main.zip s3://$(BUCKET)/builds/ratings/v$(VERSION)/main.zip
