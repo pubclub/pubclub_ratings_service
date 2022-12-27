@@ -53,6 +53,10 @@ func addRatingToDB(dyna DynamoAPI, rating Rating) (*dynamodb.PutItemOutput, erro
 	return output, nil
 }
 
+func healthCheck(c *gin.Context) {
+	c.IndentedJSON(http.StatusOK, gin.H{"Status": "Available"})
+}
+
 func createRating(c *gin.Context) {
 	var newRating Rating
 
@@ -84,6 +88,7 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 
 func main() {
 	router := gin.Default()
+	router.GET("/healthcheck", healthCheck)
 	router.POST("/rating", createRating)
 	ginLambda = ginadapter.New(router)
 	lambda.Start(Handler)
