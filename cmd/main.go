@@ -27,6 +27,7 @@ type Rating struct {
 	CreationDate string `json:"CreationDate"`
 	UserId       string `json:"UserId"`
 	PlaceId      string `json:"PlaceId"`
+	PlaceRating  string `json:"PlaceRating"`
 }
 
 var TableName string = "ratings-table"
@@ -38,6 +39,7 @@ func addRatingToDB(dyna DynamoAPI, rating Rating) (*dynamodb.PutItemOutput, erro
 		"CreationDate": {S: aws.String(rating.CreationDate)},
 		"UserId":       {S: aws.String(rating.UserId)},
 		"PlaceId":      {S: aws.String(rating.PlaceId)},
+		"PlaceRating":  {N: aws.String(rating.PlaceRating)},
 	}
 
 	input := &dynamodb.PutItemInput{
@@ -51,6 +53,27 @@ func addRatingToDB(dyna DynamoAPI, rating Rating) (*dynamodb.PutItemOutput, erro
 		return nil, err
 	}
 	return output, nil
+}
+
+func getRatingById(dyna DynamoAPI, placeId string) ([]*string, error) {
+
+	input := &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"PlaceId": {
+				N: aws.String(placeId),
+			},
+		},
+		TableName: aws.String(TableName),
+	}
+
+	response, err := dyna.Db.GetItem(input)
+	if err != nil {
+		return nil, err
+	}
+
+	rating := response.Item["Ratings"].NS
+
+	return rating, nil
 }
 
 func healthCheck(c *gin.Context) {
