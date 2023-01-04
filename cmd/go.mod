@@ -3,14 +3,15 @@ module github.com/pubclub/pubclub_ratings_service
 go 1.19
 
 require (
+	github.com/aws/aws-lambda-go v1.36.1
 	github.com/aws/aws-sdk-go v1.44.166
+	github.com/awslabs/aws-lambda-go-api-proxy v0.13.3
 	github.com/gin-gonic/gin v1.8.2
+	github.com/go-playground/assert/v2 v2.0.1
 	github.com/gusaul/go-dynamock v0.0.0-20210107061312-3e989056e1e6
 )
 
 require (
-	github.com/aws/aws-lambda-go v1.36.1 // indirect
-	github.com/awslabs/aws-lambda-go-api-proxy v0.13.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
