@@ -55,6 +55,23 @@ func addRatingToDB(dyna DynamoAPI, rating Rating) (*dynamodb.PutItemOutput, erro
 	return output, nil
 }
 
+func removeRating(dyna DynamoAPI, RatingId string) error {
+
+	deleteItem := &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"RatingId": {S: aws.String(RatingId)},
+		},
+		TableName: aws.String(TableName),
+	}
+	_, err := dyna.Db.DeleteItem(deleteItem)
+	if err != nil {
+		log.Fatalf("Unable to delete item with rating ID: %s", RatingId)
+		return err
+	}
+
+	return nil
+}
+
 func getRatingById(dyna DynamoAPI, placeId string) ([]*string, error) {
 
 	input := &dynamodb.GetItemInput{
@@ -77,7 +94,7 @@ func getRatingById(dyna DynamoAPI, placeId string) ([]*string, error) {
 }
 
 func healthCheck(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, gin.H{"Status": "Available"})
+	c.String(http.StatusOK, "alive")
 }
 
 func createRating(c *gin.Context) {
@@ -109,10 +126,16 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	return ginLambda.ProxyWithContext(ctx, req)
 }
 
-func main() {
+func setUpRouter() *gin.Engine {
 	router := gin.Default()
 	router.GET("/healthcheck", healthCheck)
 	router.POST("/rating", createRating)
+
+	return router
+}
+
+func main() {
+	router := setUpRouter()
 	ginLambda = ginadapter.New(router)
 	lambda.Start(Handler)
 	// TODO: Create a removeRating function

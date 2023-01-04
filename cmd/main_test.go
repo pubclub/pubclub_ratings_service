@@ -1,10 +1,13 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/go-playground/assert/v2"
 	dynamock "github.com/gusaul/go-dynamock"
 )
 
@@ -43,6 +46,44 @@ func TestAddRatingToDB(t *testing.T) {
 	_, _ = addRatingToDB(dyna, rating)
 }
 
+func TestRemoveRating(t *testing.T) {
+
+	var dyna DynamoAPI
+	dyna.Db, mock = dynamock.New()
+
+	removeRatingId := "1"
+
+	rating := Rating{
+		RatingId:     "1",
+		CreationDate: "2022-12-23",
+		UserId:       "1",
+		PlaceId:      "1",
+		PlaceRating:  "4",
+	}
+
+	putItem := createPutItem(rating)
+
+	// Need to ensure the mock database expects an item to be uploaded
+	// so can later be removed
+	mock.ExpectPutItem().ToTable(TableName).WithItems(putItem)
+	_, _ = addRatingToDB(dyna, rating)
+
+	expectKey := map[string]*dynamodb.AttributeValue{
+		"RatingId": {
+			S: aws.String(removeRatingId),
+		},
+	}
+
+	mock.ExpectDeleteItem().ToTable(TableName).WithKeys(expectKey)
+
+	error := removeRating(dyna, removeRatingId)
+
+	if error != nil {
+		t.Errorf("Unable to delete item")
+	}
+
+}
+
 func TestGetRatingById(t *testing.T) {
 
 	var dyna DynamoAPI
@@ -69,6 +110,8 @@ func TestGetRatingById(t *testing.T) {
 	firstPutItem := createPutItem(firstRating)
 	secondPutItem := createPutItem(secondRating)
 
+	// Need to ensure the mock database expects items to be uploaded
+	// so ratings can be grabbed
 	mock.ExpectPutItem().ToTable(TableName).WithItems(firstPutItem)
 	mock.ExpectPutItem().ToTable(TableName).WithItems(secondPutItem)
 
@@ -99,4 +142,15 @@ func TestGetRatingById(t *testing.T) {
 			t.Errorf("Test Fail")
 		}
 	}
+}
+
+func TestHealthCheck(t *testing.T) {
+	router := setUpRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/healthcheck", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, "alive", w.Body.String())
 }
