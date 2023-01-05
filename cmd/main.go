@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -32,6 +31,18 @@ type Rating struct {
 
 var TableName string = "ratings-table"
 
+func setUpDb() DynamoAPI {
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+
+	svc := dynamodb.New(sess)
+	var dyna DynamoAPI
+	dyna.Db = svc
+
+	return dyna
+}
+
 func addRatingToDB(dyna DynamoAPI, rating Rating) (*dynamodb.PutItemOutput, error) {
 
 	putItem := map[string]*dynamodb.AttributeValue{
@@ -55,7 +66,7 @@ func addRatingToDB(dyna DynamoAPI, rating Rating) (*dynamodb.PutItemOutput, erro
 	return output, nil
 }
 
-func removeRating(dyna DynamoAPI, RatingId string, CreationDate string) error {
+func removeRatingFromDB(dyna DynamoAPI, RatingId string, CreationDate string) error {
 
 	deleteItem := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
@@ -105,15 +116,7 @@ func createRating(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(newRating)
-
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-
-	svc := dynamodb.New(sess)
-	var dyna DynamoAPI
-	dyna.Db = svc
+	dyna := setUpDb()
 
 	_, err := addRatingToDB(dyna, newRating)
 	if err != nil {
@@ -121,6 +124,20 @@ func createRating(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusCreated, newRating)
+}
+
+func removeRating(c *gin.Context) {
+	ratingId := c.Param("id")
+	creationDate := c.Param("date")
+
+	dyna := setUpDb()
+	err := removeRatingFromDB(dyna, ratingId, creationDate)
+	if err != nil {
+		c.IndentedJSON(http.StatusNotModified, gin.H{"message": "Unable to delete record"})
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Rating ID" + ratingId + " deleted"})
+
 }
 
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -131,6 +148,7 @@ func setUpRouter() *gin.Engine {
 	router := gin.Default()
 	router.GET("/healthcheck", healthCheck)
 	router.POST("/rating", createRating)
+	router.DELETE("/removerating/:id/:date", removeRating)
 
 	return router
 }
@@ -139,7 +157,6 @@ func main() {
 	router := setUpRouter()
 	ginLambda = ginadapter.New(router)
 	lambda.Start(Handler)
-	// TODO: Create a removeRating function
 	// TODO: Create a getRatings function
 	//     - Maybe also getRatingsById function
 }
