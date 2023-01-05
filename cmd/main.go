@@ -55,17 +55,18 @@ func addRatingToDB(dyna DynamoAPI, rating Rating) (*dynamodb.PutItemOutput, erro
 	return output, nil
 }
 
-func removeRating(dyna DynamoAPI, RatingId string) error {
+func removeRating(dyna DynamoAPI, RatingId string, CreationDate string) error {
 
 	deleteItem := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"RatingId": {S: aws.String(RatingId)},
+			"RatingId":     {S: aws.String(RatingId)},
+			"CreationDate": {S: aws.String(CreationDate)},
 		},
 		TableName: aws.String(TableName),
 	}
 	_, err := dyna.Db.DeleteItem(deleteItem)
 	if err != nil {
-		log.Fatalf("Unable to delete item with rating ID: %s", RatingId)
+		log.Fatalf("Deleting item failed with error: %s", err)
 		return err
 	}
 
