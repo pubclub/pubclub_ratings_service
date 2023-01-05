@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -64,17 +65,6 @@ func scanTable(svc *dynamodb.DynamoDB, expr expression.Expression) (*dynamodb.Sc
 	return result, err
 }
 
-// Deletes a previously created record using the global "9999" ID
-func DeleteRecord(svc *dynamodb.DynamoDB, ratingId string, creationDate string) error {
-	var dyna DynamoAPI
-	dyna.Db = svc
-	err := removeRating(dyna, ratingId, creationDate)
-	if err != nil {
-		panic("Unable to delete record")
-	}
-	return err
-}
-
 func TestCreateAndDeleteRating(t *testing.T) {
 
 	router := setUpRouter()
@@ -113,7 +103,12 @@ func TestCreateAndDeleteRating(t *testing.T) {
 	assert.Equal(t, "9999", rating.UserId)
 	assert.Equal(t, "9999", rating.PlaceId)
 
-	err = DeleteRecord(svc, ratingId, creationDate)
+	// Creates a delete request to remove the created item
+	requestString := fmt.Sprintf("/removerating/%s/%s", ratingId, creationDate)
+	deleteReq, _ := http.NewRequest("DELETE", requestString, nil)
+	router.ServeHTTP(w, deleteReq)
+
+	assert.Equal(t, 201, w.Code)
 
 	deleteResult, err := scanTable(svc, expr)
 	if err != nil {
