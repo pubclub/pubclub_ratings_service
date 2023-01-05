@@ -80,7 +80,7 @@ func TestRemoveRating(t *testing.T) {
 
 	mock.ExpectDeleteItem().ToTable(TableName).WithKeys(expectKey)
 
-	error := removeRating(dyna, removeRatingId, removeCreationDate)
+	error := removeRatingFromDB(dyna, removeRatingId, removeCreationDate)
 
 	if error != nil {
 		t.Errorf("Unable to delete item")
