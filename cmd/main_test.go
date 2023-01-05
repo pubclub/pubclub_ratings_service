@@ -52,6 +52,7 @@ func TestRemoveRating(t *testing.T) {
 	dyna.Db, mock = dynamock.New()
 
 	removeRatingId := "1"
+	removeCreationDate := "2022-12-23"
 
 	rating := Rating{
 		RatingId:     "1",
@@ -72,11 +73,14 @@ func TestRemoveRating(t *testing.T) {
 		"RatingId": {
 			S: aws.String(removeRatingId),
 		},
+		"CreationDate": {
+			S: aws.String(removeCreationDate),
+		},
 	}
 
 	mock.ExpectDeleteItem().ToTable(TableName).WithKeys(expectKey)
 
-	error := removeRating(dyna, removeRatingId)
+	error := removeRating(dyna, removeRatingId, removeCreationDate)
 
 	if error != nil {
 		t.Errorf("Unable to delete item")
